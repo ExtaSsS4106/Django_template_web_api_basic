@@ -1,5 +1,8 @@
 # Django Template Web API
 
+[![Live Demo](https://img.shields.io/badge/demo-live-brightgreen)](https://extasss4106.github.io/Django_template_web_api_basic/)
+[![GitHub](https://img.shields.io/badge/github-repo-blue?logo=github)](https://github.com/ExtaSsS4106/Django_template_web_api_basic)
+
 ## Назначение
 
 Этот проект является базовым шаблоном для быстрого создания API на Django REST Framework. Он содержит готовую основу для регистрации пользователей, JWT-аутентификации, работы с профилем пользователя, проверки прав администратора и получения списка пользователей.
