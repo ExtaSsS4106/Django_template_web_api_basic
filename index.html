@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Django Template Web API - документация</title>
+  <style>
+    :root { color-scheme: light; --ink: #1f2933; --muted: #52606d; --line: #d9e2ec; --accent: #0b7285; --paper: #ffffff; --wash: #f4f7f9; }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--wash); color: var(--ink); font: 16px/1.65 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+    main { max-width: 980px; margin: 0 auto; padding: 48px 24px 72px; background: var(--paper); min-height: 100vh; }
+    h1 { margin-top: 0; color: #102a43; font-size: clamp(2rem, 5vw, 3.2rem); line-height: 1.1; }
+    h2 { margin-top: 2.5rem; color: #102a43; border-bottom: 1px solid var(--line); padding-bottom: .35rem; }
+    h3 { margin-top: 1.8rem; color: var(--accent); }
+    p, li { max-width: 78ch; }
+    code { background: #e9f5f7; color: #075985; padding: .12rem .35rem; border-radius: 4px; }
+    pre { overflow-x: auto; padding: 16px; border: 1px solid var(--line); border-radius: 6px; background: #f8fafc; }
+    pre code { padding: 0; background: transparent; color: var(--ink); }
+    table { width: 100%; border-collapse: collapse; margin: 1rem 0 1.5rem; }
+    th, td { border: 1px solid var(--line); padding: 10px 12px; text-align: left; vertical-align: top; }
+    th { background: #e9f5f7; color: #075985; }
+    .lead { color: var(--muted); font-size: 1.15rem; }
+    .note { border-left: 4px solid var(--accent); padding: 12px 16px; background: #eef8fa; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>Django Template Web API</h1>
+  <p class="lead">Базовый шаблон для быстрого создания API на Django REST Framework и работы с данными.</p>
+
+  <h2>Назначение</h2>
+  <p>Проект содержит готовую основу для регистрации пользователей, JWT-аутентификации, работы с профилем, проверки прав администратора и получения списка пользователей. Он помогает быстро начать разработку API без повторной настройки структуры Django, сериализаторов, маршрутов, JWT и базы данных.</p>
+
+  <h2>Возможности</h2>
+  <ul>
+    <li>Django 6 и Django REST Framework.</li>
+    <li>JWT-аутентификация, access-токен на 3 часа и refresh-токен на 1 день.</li>
+    <li>Ротация refresh-токенов и blacklist старых токенов.</li>
+    <li>Регистрация пользователя или администратора, профиль и поиск пользователей.</li>
+    <li>SQLite по умолчанию и заготовка конфигурации PostgreSQL.</li>
+  </ul>
+
+  <h2>Установка и запуск</h2>
+  <pre><code>python -m venv venv
+source venv/bin/activate       # Linux/macOS
+# venv\Scripts\activate        # Windows
+pip install -r req.txt
+python manage.py migrate
+python manage.py runserver</code></pre>
+  <p>API будет доступно по адресу <code>http://127.0.0.1:8000/</code>. Для запуска на порту 8010 используйте <code>python manage.py runserver 0.0.0.0:8010</code>. Админ-панель находится по адресу <code>/admin/</code>.</p>
+  <p class="note">В Dockerfile используется имя <code>requirements.txt</code>, но в проекте зависимости находятся в <code>req.txt</code>. Перед Docker-сборкой нужно синхронизировать эти имена.</p>
+
+  <h2>Аутентификация</h2>
+  <p>Защищённые запросы используют заголовок <code>Authorization: Bearer &lt;access_token&gt;</code>.</p>
+  <h3>Вход</h3>
+  <p><code>POST /api/login/</code></p>
+  <pre><code>{
+  "username": "john",
+  "password": "StrongPass123!"
+}</code></pre>
+  <p>Ответ содержит поля <code>access</code> и <code>refresh</code>.</p>
+  <h3>Обновление токена</h3>
+  <p><code>POST /api/token/refresh/</code></p>
+  <pre><code>{ "refresh": "&lt;refresh_token&gt;" }</code></pre>
+  <p>При включённой ротации сохраняйте новый refresh-токен из ответа.</p>
+
+  <h2>Endpoints</h2>
+  <table>
+    <thead><tr><th>Метод и путь</th><th>Назначение</th><th>Авторизация</th></tr></thead>
+    <tbody>
+      <tr><td><code>POST /api/register/</code></td><td>Регистрация пользователя. Поля: username, password, password2, email, first_name, last_name, role.</td><td>Нет</td></tr>
+      <tr><td><code>GET /api/profile/</code></td><td>Профиль текущего пользователя.</td><td>Да</td></tr>
+      <tr><td><code>PUT /api/profile/</code></td><td>Частичное обновление профиля.</td><td>Да</td></tr>
+      <tr><td><code>GET /api/amisuperuser/</code></td><td>Проверка поля status_admin.</td><td>Да</td></tr>
+      <tr><td><code>POST /api/logout/</code></td><td>Добавление refresh-токена в blacklist.</td><td>Да</td></tr>
+      <tr><td><code>GET /api/all-users/</code></td><td>Список profile_id, username и user_id.</td><td>По текущему view: нет</td></tr>
+      <tr><td><code>POST /api/all-users/</code></td><td>Поиск по частичному имени пользователя через { "query": "jo" }.</td><td>По текущему view: нет</td></tr>
+    </tbody>
+  </table>
+
+  <h3>Регистрация</h3>
+  <pre><code>POST /api/register/
+Content-Type: application/json
+
+{
+  "username": "john",
+  "password": "StrongPass123!",
+  "password2": "StrongPass123!",
+  "email": "john@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "user"
+}</code></pre>
+  <p>Пароли должны совпадать. Значение <code>role=admin</code> создаёт суперпользователя и должно быть защищено дополнительной логикой в реальном приложении.</p>
+
+  <h3>Выход</h3>
+  <p><code>POST /api/logout/</code> с телом <code>{ "refresh_token": "&lt;refresh_token&gt;" }</code>. При успехе возвращается HTTP 205.</p>
+
+  <h3>Информация о пользователе</h3>
+  <p>Представление <code>ProfileInfo</code> рассчитано на ответ с user_id, profile_id, username, email и date_joined. Сейчас маршрут объявлен как <code>/api/profile-info/</code>, но view требует <code>user_id</code>. Для рабочего варианта маршрут нужно изменить на <code>api/profile-info/&lt;int:user_id&gt;/</code> и обращаться к <code>GET /api/profile-info/1/</code>.</p>
+
+  <h2>Модели и миграции</h2>
+  <p>Используются стандартная модель Django <code>User</code> и модель <code>profiles</code> со связью один-к-одному и полем <code>role</code>. После изменения моделей выполните:</p>
+  <pre><code>python manage.py makemigrations
+python manage.py migrate</code></pre>
+  <p>Локальная база хранится в <code>db.sqlite3</code>. Для PostgreSQL используются переменные DB_NAME, DB_USER, DB_PASSWORD, DB_HOST и DB_PORT.</p>
+
+  <h2>Структура</h2>
+  <pre><code>api/       модели, сериализаторы, views, URL и миграции
+conf/      настройки Django и корневые маршруты
+manage.py  команды управления проектом
+media/     загружаемые файлы</code></pre>
+
+  <h2>Как расширять шаблон</h2>
+  <ol>
+    <li>Добавьте или измените модели данных.</li>
+    <li>Создайте сериализаторы и views на базе DRF.</li>
+    <li>Подключите новые маршруты в <code>api/urls.py</code>.</li>
+    <li>Создайте миграции и тесты.</li>
+    <li>Перед публикацией замените development-настройки.</li>
+  </ol>
+
+  <h2>Перед production</h2>
+  <ul>
+    <li>Установите <code>DEBUG = False</code>, замените <code>SECRET_KEY</code> и ограничьте <code>ALLOWED_HOSTS</code>.</li>
+    <li>Запретите публичную выдачу роли администратора через поле role.</li>
+    <li>Настройте HTTPS, CORS, throttling и права доступа.</li>
+    <li>Проверьте защиту media-файлов и добавьте тесты для всех ключевых сценариев.</li>
+  </ul>
+
+  <h2>Полезные команды</h2>
+  <pre><code>python manage.py check
+python manage.py test
+python manage.py showmigrations
+python manage.py shell</code></pre>
+</main>
+</body>
+</html>
